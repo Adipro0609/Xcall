@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Xcall</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  background: #1e1f22;
+  color: white;
+}
+
+/* Sidebar (servers) */
+#servers {
+  width: 80px;
+  background: #111214;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 10px;
+}
+
+.server {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #2b2d31;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.server:hover {
+  background: #5865f2;
+}
+
+/* Channels */
+#channels {
+  width: 200px;
+  background: #2b2d31;
+  padding: 10px;
+}
+
+.channel {
+  padding: 8px;
+  margin: 5px 0;
+  background: #1e1f22;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.channel:hover {
+  background: #40444b;
+}
+
+/* Chat */
+#chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 5px;
+  background: #2b2d31;
+  border-radius: 5px;
+}
+
+#inputArea {
+  display: flex;
+  padding: 10px;
+  background: #2b2d31;
+}
+
+input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  outline: none;
+}
+
+button {
+  margin-left: 10px;
+  padding: 10px;
+  background: #5865f2;
+  border: none;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#topbar {
+  padding: 10px;
+  background: #111214;
+  font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div id="servers"></div>
+
+<div id="channels">
+  <h3>Channels</h3>
+  <div id="channelList"></div>
+</div>
+
+<div id="chat">
+  <div id="topbar">Xcall Chat</div>
+  <div id="messages"></div>
+
+  <div id="inputArea">
+    <input id="msgInput" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("xcall")) || {
+  servers: {
+    "Home": { channels: ["general", "gaming", "random"], messages: {} },
+    "Study": { channels: ["math", "coding"], messages: {} }
+  }
+};
+
+let currentServer = "Home";
+let currentChannel = "general";
+
+/* INIT MESSAGES */
+function init() {
+  renderServers();
+  renderChannels();
+  renderMessages();
+}
+
+/* SERVERS */
+function renderServers() {
+  const serversDiv = document.getElementById("servers");
+  serversDiv.innerHTML = "";
+
+  Object.keys(data.servers).forEach(server => {
+    const div = document.createElement("div");
+    div.className = "server";
+    div.innerText = server[0];
+    div.title = server;
+
+    div.onclick = () => {
+      currentServer = server;
+      currentChannel = data.servers[server].channels[0];
+      renderChannels();
+      renderMessages();
+    };
+
+    serversDiv.appendChild(div);
+  });
+}
+
+/* CHANNELS */
+function renderChannels() {
+  const channelList = document.getElementById("channelList");
+  channelList.innerHTML = "";
+
+  data.servers[currentServer].channels.forEach(ch => {
+    const div = document.createElement("div");
+    div.className = "channel";
+    div.innerText = "#" + ch;
+
+    div.onclick = () => {
+      currentChannel = ch;
+      renderMessages();
+    };
+
+    channelList.appendChild(div);
+  });
+}
+
+/* MESSAGES */
+function renderMessages() {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
+
+  let msgs =
+    data.servers[currentServer].messages[currentChannel] || [];
+
+  msgs.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "message";
+    div.innerText = m;
+    messagesDiv.appendChild(div);
+  });
+
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+/* SEND MESSAGE */
+function sendMessage() {
+  const input = document.getElementById("msgInput");
+  if (!input.value.trim()) return;
+
+  if (!data.servers[currentServer].messages[currentChannel]) {
+    data.servers[currentServer].messages[currentChannel] = [];
+  }
+
+  data.servers[currentServer].messages[currentChannel].push(input.value);
+
+  localStorage.setItem("xcall", JSON.stringify(data));
+
+  input.value = "";
+  renderMessages();
+}
+
+init();
+</script>
+
+</body>
+</html>
